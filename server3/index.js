@@ -1,47 +1,63 @@
-const express = require("express");
-const cors = require('cors');
+const express = require('express');
 const app = express();
-const bodyparser = require("body-parser");
-let db = [
-    {
-      id: 1,
-      nome: "mario",
-      cognome: "rossi",
-      numero: "123456789",
-    },
-    {
-      id: 2,
-      nome: "gianni",
-      cognome: "bianchi",
-      numero: "134345789",
-    },
-    {
-      id: 3,
-      nome: "giovanni",
-      cognome: "verdi",
-      numero: "167676789",
-    },
-    {
-      id: 4,
-      nome: "beppe",
-      cognome: "vessicchio",
-      numero: "14545489",
-    },
-  ];
-app.use(bodyparser.json());
-const port = 3000;
+const cors = require('cors');
+app.use(express.json());
 app.use(cors());
 
+const registeredUsers = [];
+const loggedInUsers = [];
 
 
-app.get("/", (req, res) => {
-  res.json(db);
+app.post('/register', (req, res) => {
+    const { username, password } = req.body;
+    const newUser = { username, password };
+    registeredUsers.push(newUser);
+    res.status(201).json({ message: 'Utente registrato con successo' });
 });
-// app.post('/', (req, res) => {
-//     req.
-// })
 
 
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    const user = registeredUsers.find(user => user.username === username && user.password === password);
+    if (user) {
+        loggedInUsers.push(user);
+        res.status(200).json({ message: 'Accesso effettuato con successo' });
+    } else {
+        res.status(401).json({ message: 'Credenziali non valide' });
+    }
+});
+
+
+app.post('/logout', (req, res) => {
+    const { username } = req.body;
+    const index = loggedInUsers.findIndex(user => user.username === username);
+    if (index !== -1) {
+        loggedInUsers.splice(index, 1);
+        res.status(200).json({ message: 'Utente disconnesso' });
+    } else {
+        res.status(404).json({ message: 'Utente non trovato nei loggati' });
+    }
+});
+
+
+app.get('/users', (req, res) => {
+    res.status(200).json(registeredUsers);
+});
+
+
+app.get('/userCount', (req, res) => {
+    res.status(200).json({ count: registeredUsers.length });
+});
+
+
+app.post('/checkLogin', (req, res) => {
+    const { username } = req.body;
+    const isLoggedIn = loggedInUsers.some(user => user.username === username);
+    res.status(200).json({ isLoggedIn });
+});
+
+
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server in esecuzione sulla porta ${PORT}`);
 });
